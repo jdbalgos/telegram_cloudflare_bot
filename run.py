@@ -552,7 +552,7 @@ def cf_domain_add(domain, access_key):
     url = "https://api.cloudflare.com/client/v4/zones"
     headers = { "Content-Type": "application/json", "Authorization": "Bearer {}".format(access_key) }
     data = {"name":"{}".format(domain),"jump_start":False}
-    response = requests.request("POST", url, headers=headers, json=data)
+    response = requests.request("POST", url, headers=headers, json=data, timeout=5)
     response_json = response.json()
     if response_json['success']:
       return {'success': response_json['success'], 'name_servers': response_json['result']['name_servers']}
@@ -573,7 +573,7 @@ def cf_domain_delete(domain, access_key):
     url = "https://api.cloudflare.com/client/v4/zones/{}".format(zone_id)
     headers = { "Content-Type": "application/json", "Authorization": "Bearer {}".format(access_key) }
     data = {"name":"{}".format(domain)}
-    response = requests.request("DELETE", url, headers=headers, json=data)
+    response = requests.request("DELETE", url, headers=headers, json=data, timeout=5)
     response_json = response.json()
     if response_json['success']:
       return {'success': response_json['success']}
@@ -587,7 +587,7 @@ def cf_token_verify(access_key):
   try:
     url = "https://api.cloudflare.com/client/v4/user/tokens/verify"
     headers = { "Content-Type": "application/json", "Authorization": "Bearer {}".format(access_key) }
-    response = requests.request("GET", url, headers=headers)
+    response = requests.request("GET", url, headers=headers, timeout=5)
     response_json = response.json()
     print(str(response_json))
     if response_json['success']:
@@ -613,7 +613,7 @@ def cf_record_add(domain_name, record_name, record_type, record_value, access_ke
     "type": record_type,
      }
     headers = { "Content-Type": "application/json", "Authorization": "Bearer {}".format(access_key) }
-    response = requests.request("POST", url, headers=headers, json=data)
+    response = requests.request("POST", url, headers=headers, json=data, timeout=5)
     response_json = response.json()
     if response_json['success']:
       return {'success': response_json['success']}
@@ -648,7 +648,7 @@ def cf_record_update(domain_name, record_name, record_type, record_value, access
     "type": record_type,
     }  
     headers = { "Content-Type": "application/json", "Authorization": "Bearer {}".format(access_key) }
-    response = requests.request("PUT", url, headers=headers, json=data)
+    response = requests.request("PUT", url, headers=headers, json=data, timeout=5)
     response_json = response.json()
     if response_json['success']:
       return {'success': response_json['success']}
@@ -663,14 +663,14 @@ def cf_domain_record_scan(zone_id, access_key):
   try:
     url = "https://api.cloudflare.com/client/v4/zones/{}/dns_records".format(zone_id)
     headers = { "Content-Type": "application/json", "Authorization": "Bearer {}".format(access_key) }
-    response = requests.request("GET", url, headers=headers)
+    response = requests.request("GET", url, headers=headers, timeout=5)
     response_json_page = response.json()
     get_total_pages = response_json_page['result_info']['total_pages']
     return_result = {}
     return_list = []
     for page_number in range(get_total_pages):
       page_url = 'https://api.cloudflare.com/client/v4/zones/{}/dns_records?page={}'.format(zone_id, page_number + 1)
-      response = requests.request("GET", page_url, headers=headers)
+      response = requests.request("GET", page_url, headers=headers, timeout=5)
       response_json = response.json()
       data_json = {}
       for domain_group in response_json['result']:
@@ -684,13 +684,13 @@ def cf_domain_record_scan(zone_id, access_key):
 def cf_get_domain_details(domain, access_key):
   url = 'https://api.cloudflare.com/client/v4/zones'
   headers = { "Content-Type": "application/json", "Authorization": "Bearer {}".format(access_key) }
-  response = requests.request("GET", url, headers=headers)
+  response = requests.request("GET", url, headers=headers, timeout=5)
   response_json_page = response.json()
   get_total_pages = response_json_page['result_info']['total_pages']
   return_result = {}
   for page_number in range(get_total_pages):
     page_url = 'https://api.cloudflare.com/client/v4/zones?page={}'.format(page_number + 1)
-    response = requests.request("GET", page_url, headers=headers)
+    response = requests.request("GET", page_url, headers=headers, timeout=5)
     response_json = response.json()
     for domain_group in response_json['result']:
       if domain_group['name'] == domain:
@@ -701,14 +701,14 @@ def cf_list_all_domains(access_key):
   try:
     url = 'https://api.cloudflare.com/client/v4/zones'
     headers = { "Content-Type": "application/json", "Authorization": "Bearer {}".format(access_key) }
-    response = requests.request("GET", url, headers=headers)
+    response = requests.request("GET", url, headers=headers, timeout=5)
     response_json_page = response.json()
     get_total_pages = response_json_page['result_info']['total_pages']
     return_result = {}
     domains_all = []
     for page_number in range(get_total_pages):
       page_url = 'https://api.cloudflare.com/client/v4/zones?page={}'.format(page_number + 1)
-      response = requests.request("GET", page_url, headers=headers)
+      response = requests.request("GET", page_url, headers=headers, timeout=5)
       response_json = response.json()
       for domain_group in response_json['result']:
         domains_all.append(domain_group['name'])
