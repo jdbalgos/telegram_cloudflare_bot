@@ -1,0 +1,31 @@
+pipeline {
+  agent {
+    label 'test2_jenkins'
+  }
+  stages {
+    stage('Build image') {
+      steps {
+        dir('build') {
+          sh "docker build -t jddevpepeg/telegram_cloudflare_bot:latest -t jddevpepeg/telegram_cloudflare_bot:jenkins-1.$BUILD_NUMBER --build-arg CACHEBUST=`date +%s` ."
+          }
+        }
+      }
+    stage('Push') {
+      steps {
+        sh "docker image push jddevpepeg/telegram_cloudflare_bot:jenkins-1.$BUILD_NUMBER"
+        sh 'docker image push jddevpepeg/telegram_cloudflare_bot:latest'
+      }
+    }
+    stage('Delete previous build') {
+      steps {
+        script {
+          def buildNumber = currentBuild.number
+          OLD_BUILD_NUMBER = buildNumber - 1
+        }
+        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+          sh "docker image rm jddevpepeg/telegram_cloudflare_bot:jenkins-1.$OLD_BUILD_NUMBER"
+        }
+      }
+    }
+  }
+}

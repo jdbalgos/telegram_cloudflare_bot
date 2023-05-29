@@ -1,0 +1,5 @@
+logs/*.logs
+.venv/
+settings.yaml
+build/docker-compose.yaml
+test.py

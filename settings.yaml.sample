@@ -1,0 +1,11 @@
+---
+telegram_api:
+  token: 
+  name: 
+  bot_backend:
+mysql_data:
+  host: 
+  user: 
+  password: 
+  database: 
+  table_name: 

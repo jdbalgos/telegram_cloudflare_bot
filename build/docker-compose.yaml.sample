@@ -1,0 +1,25 @@
+version: '3.3'
+services:
+  db:
+    container_name: ""
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: ''
+      MYSQL_USER: ''
+      MYSQL_PASSWORD: ''
+      MYSQL_ROOT_PASSWORD: ''
+    ports:
+      - '127.0.0.1:3306:3306'
+    volumes:
+      - /data/caomei_bot/mysql:/var/lib/mysql
+  app:
+    container_name: ''
+    image: jddevpepeg/telegram_cloudflare_bot:latest
+    restart: always
+    volumes:
+      - ./settings.yaml:/app/settings.yaml
+    links:
+      - 'db'
+    depends_on:
+      - 'db'
