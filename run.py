@@ -91,6 +91,7 @@ Commands -
 /add_user      ---> add user to use bot
 /get_info      ---> get user info(to send to admin for approval)
 /delete_domain ---> delete domain/s 
+/list_all_domains ---> list all domains in account
 """
     )
     return ConversationHandler.END
@@ -198,21 +199,25 @@ def add_access_key(update, context):
   else:
     update.message.reply_text('Something went wrong: {}'.format(put_access_key['reason']))
     return ConversationHandler.END
-
-def add_email(update, context):
-  if not yeet_checker(update): 
+ 
+def list_all_domains(update, context):
+  if not yeet_checker(update):
     update.message.reply_text("user not allowed")
     return ConversationHandler.END
   chat_id = update.message.chat.id
   record_name = 'db_' + str(chat_id)
-  message = update.message.text
-  message = message.strip()
-  put_email = update_value_str(table_name, record_name, 'email', message)
-  if put_email:
-    update.message.reply_text('Successfully add Email address')
+  access_key_data = get_data_value(table_name, record_name, 'access_key')
+  if access_key_data['success']:
+    access_key = access_key_data['value']
   else:
-    update.message.reply_text('Something went wrong')
-    return ConversationHandler.END
+    update.message.reply_text("error getting access_key\naccess_key already added?")
+    return ConversationHandler.END  
+  request_all_domains = cf_list_all_domains(access_key)
+  if request_all_domains['success']:
+    update.message.reply_text('Domains in account:\n{}'.format('\n'.join(map(str, request_all_domains['value']))))
+  else:
+    update.message.reply_text("fail to get domains: {}".format(request_all_domains['reason']))
+  return ConversationHandler.END
 
 def add_domain(update, context):
   if not yeet_checker(update): 
@@ -691,6 +696,25 @@ def cf_get_domain_details(domain, access_key):
       if domain_group['name'] == domain:
         return {'success': True, 'domain_name': domain_group['name'], 'domain_zone_id': domain_group['id'], 'domain_name_servers': domain_group['name_servers']}
   return {'success': False, 'reason': 'Not Found'}
+
+def cf_list_all_domains(access_key):
+  try:
+    url = 'https://api.cloudflare.com/client/v4/zones'
+    headers = { "Content-Type": "application/json", "Authorization": "Bearer {}".format(access_key) }
+    response = requests.request("GET", url, headers=headers)
+    response_json_page = response.json()
+    get_total_pages = response_json_page['result_info']['total_pages']
+    return_result = {}
+    domains_all = []
+    for page_number in range(get_total_pages):
+      page_url = 'https://api.cloudflare.com/client/v4/zones?page={}'.format(page_number + 1)
+      response = requests.request("GET", page_url, headers=headers)
+      response_json = response.json()
+      for domain_group in response_json['result']:
+        domains_all.append(domain_group['name'])
+    return {'success': True, 'value': domains_all}
+  except Exception as err:
+    return {'success': False, 'reason': str(err)}
       
 
 def main():
@@ -709,6 +733,7 @@ def main():
         CommandHandler('add_user', add_user),
         CommandHandler('list_record', list_record),
         CommandHandler('delete_domain', delete_domain),
+        CommandHandler('list_all_domains', list_all_domains),
         ],
         fallbacks=[],
         allow_reentry=True,
