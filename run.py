@@ -9,6 +9,7 @@ from datetime import datetime
 import requests
 
 run_chat_id = ''
+APP_VER = 1.3
 
 
 with open('settings.yaml','r') as settings:
@@ -21,16 +22,16 @@ with open('settings.yaml','r') as settings:
   mysql_user = api_settings_yaml['mysql_data']['user']
   mysql_password = api_settings_yaml['mysql_data']['password']
   mysql_database = api_settings_yaml['mysql_data']['database']
-  app_ver = api_settings_yaml['app_version']
   verbose = api_settings_yaml['verbose']
 
-
-mydb = mysql.connector.connect(
+def mysql_con():
+  mydb = mysql.connector.connect(
   host=mysql_host,
   user=mysql_user,
   password=mysql_password,
   database=mysql_database
-)
+  )
+  return mydb
 
 def yeet_checker(update):
     try:
@@ -98,6 +99,7 @@ Commands -
 
 def check_table(table_to_check):
     try:
+      mydb = mysql_con()
       sql_cursor = mydb.cursor()
       tb_check = "SHOW TABLES"
       sql_cursor.execute(tb_check)
@@ -111,6 +113,7 @@ def check_table(table_to_check):
       return False
 
 def check_groupdb_exist(data_name):
+    mydb = mysql_con()
     sql_cursor = mydb.cursor()
     tb_exist_q = "SELECT name FROM {}".format(table_name)
     sql_cursor.execute(tb_exist_q)
@@ -125,6 +128,7 @@ def check_groupdb_exist(data_name):
       return False
     
 def get_group_data(name, record_name):
+    mydb = mysql_con()
     sql_cursor = mydb.cursor()
     sql_query = "SELECT * FROM {} WHERE name = '{}'".format(record_name, name)
     sql_cursor.execute(sql_query)
@@ -141,6 +145,7 @@ def get_group_data(name, record_name):
     
 def create_setup(chat_id, username):
     record_name = 'db_' + str(chat_id)
+    mydb = mysql_con()
     sql_cursor_create = mydb.cursor()
     sql_cursor_insert = mydb.cursor()
     if check_table(table_name):
@@ -162,6 +167,7 @@ def create_setup(chat_id, username):
 
 def delete_setup(chat_id):
     try:
+      mydb = mysql_con()
       record_name = 'db_' + str(chat_id)
       SQL_query = "DELETE FROM {} WHERE name = '{}'".format(table_name, record_name)
       mysql_cursor = mydb.cursor()
@@ -512,6 +518,7 @@ def bot_updates(update, context):
         
 def update_value_str(table_name, record_name, record_sbj, record_val):
     try:
+      mydb = mysql_con()
       sql_cursor = mydb.cursor()
       SQL_query = "UPDATE {} SET {} = '{}' WHERE name = '{}'".format(table_name, record_sbj, record_val, record_name)
       print(SQL_query)
@@ -523,6 +530,7 @@ def update_value_str(table_name, record_name, record_sbj, record_val):
 
 def update_value_num(table_name, record_name, record_sbj, record_val):
     try:
+      mydb = mysql_con()
       sql_cursor = mydb.cursor()
       SQL_query = "UPDATE {} SET {} = {} WHERE name = '{}'".format(table_name, record_sbj, record_val, record_name)
       print(SQL_query)
@@ -534,6 +542,7 @@ def update_value_num(table_name, record_name, record_sbj, record_val):
 
 def get_data_value(table_name, record_name, record_sbj):
     try:
+      mydb = mysql_con()
       sql_cursor = mydb.cursor()
       SQL_query = "SELECT {} FROM {} WHERE name = '{}'".format(record_sbj, table_name, record_name)
       print(SQL_query)
@@ -719,7 +728,7 @@ def cf_list_all_domains(access_key):
 
 def main():
     updater = Updater(TOKEN, use_context=True)
-    updater.bot.sendMessage(chat_id=bot_backend, text='Bot Started\nApp Version: {}'.format(app_ver))
+    updater.bot.sendMessage(chat_id=bot_backend, text='Bot Started\nApp Version: {}'.format(APP_VER))
     dp = updater.dispatcher
     conv_handler = ConversationHandler(
         entry_points=[
